@@ -240,6 +240,23 @@ if(NA_USE_SM)
   endif()
 endif()
 
+# PSM
+option(NA_USE_PSM "Use PSM." OFF)
+if(NA_USE_PSM)
+  find_package(PSM REQUIRED)
+  message(STATUS "PSM include directory: ${PSM_INCLUDE_DIR}")
+  set(NA_PLUGINS ${NA_PLUGINS} psm)
+  set(NA_HAS_PSM 1)
+  set(NA_INT_INCLUDE_DEPENDENCIES
+    ${NA_INT_INCLUDE_DEPENDENCIES}
+    ${PSM_INCLUDE_DIR}
+  )
+  set(NA_EXT_LIB_DEPENDENCIES
+    ${NA_EXT_LIB_DEPENDENCIES}
+    ${PSM_LIBRARIES}
+  )
+endif()
+
 #------------------------------------------------------------------------------
 # Configure module header files
 #------------------------------------------------------------------------------
@@ -310,6 +327,13 @@ if(NA_HAS_SM)
   set(NA_SRCS
     ${NA_SRCS}
     ${CMAKE_CURRENT_SOURCE_DIR}/na_sm.c
+  )
+endif()
+
+if(NA_HAS_PSM)
+  set(NA_SRCS
+    ${NA_SRCS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/na_psm.c
   )
 endif()
 
