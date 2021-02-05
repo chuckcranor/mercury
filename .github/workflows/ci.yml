@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - master
+      - na_psm
   pull_request:
     branches:
       - master
+      - na_psm
 
 jobs:
   format:

@@ -1,0 +1,157 @@
+diff --git a/Makefile b/Makefile
+index d79c4bd..6bdc837 100644
+--- a/Makefile
++++ b/Makefile
+@@ -40,8 +40,8 @@ ifdef LOCAL_PREFIX
+ else
+ 	INSTALL_PREFIX := /usr
+ endif
+-libdir ?= $(INSTALL_PREFIX)/lib64
+-sbindir ?= $(INSTALL_PREFIX)/sbin
++libdir ?= /lib64
++sbindir ?= /sbin
+ 
+ INSTALL_LIB_TARG = $(libdir)
+ INSTALL_SBIN_TARG = $(sbindir)
+@@ -188,8 +188,8 @@ install: all
+ 		ln -sf ${TARGLIB}.so.${MAJOR}.${MINOR} ${TARGLIB}.so.${MAJOR} ; \
+ 		ln -sf ${TARGLIB}.so.${MAJOR} ${TARGLIB}.so) ; \
+ 	if [ X$(MIC) != X1 ]; then \
+-		install -D psm.h ${DESTDIR}/usr/include/psm.h ; \
+-		install -D psm_mq.h ${DESTDIR}/usr/include/psm_mq.h ; \
++		install -D psm.h ${DESTDIR}/include/psm.h ; \
++		install -D psm_mq.h ${DESTDIR}/include/psm_mq.h ; \
+ 	else \
+ 		filelist=/opt/intel/mic/psm/psm.filelist ; \
+ 		sed -e 's!%IPATHMAJOR%!$(IPATH_LIB_MAJOR)!g' \
+diff --git a/buildflags.mak b/buildflags.mak
+index 34fdf1c..6714d32 100644
+--- a/buildflags.mak
++++ b/buildflags.mak
+@@ -72,7 +72,7 @@ WERROR := -Werror
+ INCLUDES := -I. -I$(top_srcdir)/include -I$(top_srcdir)/mpspawn \
+ 	-I$(top_srcdir)/include/$(os)-$(arch) $(SCIF_INCLUDE_FLAGS)
+ BASECFLAGS += $(BASE_FLAGS) $(if $(MIC:0=),$(if $(filter $(CC),icc),-mmic,-D__MIC__)) \
+-	-Wall $(WERROR) $(if $(MIC:0=),-Wno-unused) -fpic -fPIC -D_GNU_SOURCE \
++	-Wall $(if $(MIC:0=),-Wno-unused) -fpic -fPIC -D_GNU_SOURCE \
+ 	$(if $(filter $(CC),icc),,-funwind-tables) $(if $(PSM_PROFILE:0=),-DPSM_PROFILE) \
+ 	${IPATH_CFLAGS}
+ ASFLAGS += $(BASE_FLAGS) $(if $(MIC:0=),$(if $(filter $(CC),icc),-mmic,-D__MIC__)) -g3 -fpic
+@@ -85,6 +85,9 @@ LDFLAGS += $(SCIF_LINK_FLAGS)
+ ifneq (,${PSM_DEBUG})
+   BASECFLAGS += -O -g3 -DPSM_DEBUG $(if $(filter $(CC),icc),,-funit-at-a-time) \
+ 	-Wp,-D_FORTIFY_SOURCE=2
++  ifneq (,${PSM_SANITIZE})
++    BASECFLAGS += -fsanitize=thread
++  endif
+ else
+   BASECFLAGS += -O3 -g3 
+ endif
+diff --git a/ipath/ipath_proto.c b/ipath/ipath_proto.c
+index 5f9365f..9267991 100644
+--- a/ipath/ipath_proto.c
++++ b/ipath/ipath_proto.c
+@@ -36,6 +36,7 @@
+ // This file contains the initialization functions used by the low
+ // level infinipath protocol code.
+ 
++#include <sys/sysmacros.h>
+ #include <sys/poll.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+diff --git a/psm_error.h b/psm_error.h
+index 21f5745..886da89 100644
+--- a/psm_error.h
++++ b/psm_error.h
+@@ -42,7 +42,7 @@
+ #define PSMI_EP_NORETURN	    ((psm_ep_t) -2)
+ #define PSMI_EP_LOGEVENT	    ((psm_ep_t) -3)
+ 
+-psm_ep_errhandler_t psmi_errhandler_global;
++extern psm_ep_errhandler_t psmi_errhandler_global;
+ 
+ psm_error_t psmi_handle_error(psm_ep_t ep, psm_error_t error, 
+ 			      const char *buf, ...)
+diff --git a/psm_user.h b/psm_user.h
+index c9aadcc..a8fbc45 100644
+--- a/psm_user.h
++++ b/psm_user.h
+@@ -100,7 +100,7 @@ psm_error_t psmi_mq_wait_internal(psm_mq_req_t *ireq);
+ #endif
+ 
+ #ifdef PSMI_PLOCK_IS_SPINLOCK
+-  psmi_spinlock_t  psmi_progress_lock;
++  extern psmi_spinlock_t  psmi_progress_lock;
+   #define PSMI_PLOCK_INIT()   psmi_spin_init(&psmi_progress_lock)
+   #define PSMI_PLOCK_TRY()    psmi_spin_trylock(&psmi_progress_lock)
+   #define PSMI_PLOCK()	      psmi_spin_lock(&psmi_progress_lock)
+@@ -109,8 +109,8 @@ psm_error_t psmi_mq_wait_internal(psm_mq_req_t *ireq);
+   #define PSMI_PUNLOCK_ASSERT()
+   #define PSMI_PLOCK_DISABLED  0
+ #elif defined(PSMI_PLOCK_IS_MUTEXLOCK_DEBUG) 
+-  pthread_mutex_t  psmi_progress_lock;
+-  pthread_t	   psmi_progress_lock_owner;
++  extern pthread_mutex_t  psmi_progress_lock;
++  extern pthread_t	  psmi_progress_lock_owner;
+   #define PSMI_PLOCK_NO_OWNER	((pthread_t)(-1))
+ 
+   PSMI_ALWAYS_INLINE(
+@@ -156,7 +156,7 @@ psm_error_t psmi_mq_wait_internal(psm_mq_req_t *ireq);
+ 
+   #define PSMI_PLOCK_DISABLED  0
+ #elif defined (PSMI_PLOCK_IS_MUTEXLOCK)
+-  pthread_mutex_t  psmi_progress_lock;
++  extern pthread_mutex_t  psmi_progress_lock;
+   #define PSMI_PLOCK_INIT()   /* static initialization */
+   #define PSMI_PLOCK_TRY()    pthread_mutex_trylock(&psmi_progress_lock)
+   #define PSMI_PLOCK()	      pthread_mutex_lock(&psmi_progress_lock)
+diff --git a/psm_utils.h b/psm_utils.h
+index e6420e0..6c2c5c3 100644
+--- a/psm_utils.h
++++ b/psm_utils.h
+@@ -254,7 +254,7 @@ int	psmi_diags(void);
+  * Fault injection
+  */
+ struct psmi_faultinj_spec;
+-int    psmi_faultinj_enabled; /* use macro to test */
++extern int    psmi_faultinj_enabled; /* use macro to test */
+ #if 1 /* possible to disable at compile time */
+ #define PSMI_FAULTINJ_ENABLED()	(!!psmi_faultinj_enabled)
+ #else
+diff --git a/ptl_am/ptl_fwd.h b/ptl_am/ptl_fwd.h
+index 3be8f5b..bfb2715 100644
+--- a/ptl_am/ptl_fwd.h
++++ b/ptl_am/ptl_fwd.h
+@@ -47,7 +47,7 @@
+ #endif
+ 
+ /* Symbol in am ptl */
+-struct ptl_ctl_init psmi_ptl_amsh;
++extern struct ptl_ctl_init psmi_ptl_amsh;
+ 
+ /* Special non-ptl function exposed to pre-attach to shm segment */
+ psm_error_t psmi_shm_attach(psm_ep_t ep, int *shmidx_o);
+diff --git a/ptl_ips/ptl_fwd.h b/ptl_ips/ptl_fwd.h
+index 08d4c53..5e9cd47 100644
+--- a/ptl_ips/ptl_fwd.h
++++ b/ptl_ips/ptl_fwd.h
+@@ -38,5 +38,5 @@
+ typedef struct ptl_epaddr ips_epaddr_t;
+ 
+ /* Symbol in ips ptl */
+-struct ptl_ctl_init psmi_ptl_ips;
++extern struct ptl_ctl_init psmi_ptl_ips;
+ #endif /* _PTL_FWD_IPS_H */
+diff --git a/ptl_self/ptl_fwd.h b/ptl_self/ptl_fwd.h
+index ff79c7e..32f9041 100644
+--- a/ptl_self/ptl_fwd.h
++++ b/ptl_self/ptl_fwd.h
+@@ -35,7 +35,7 @@
+ #define _PTL_FWD_SELF_H
+ 
+ /* Symbol in am ptl */
+-struct ptl_ctl_init psmi_ptl_self;
++extern struct ptl_ctl_init psmi_ptl_self;
+ 
+ #endif
+ 

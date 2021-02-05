@@ -24,6 +24,15 @@ UCX_VERSION=1.11.2
 
 PREFIX=${RUNNER_TEMP}/${INSTALL_DIR}
 
+# PSM
+if [[ $MERCURY_BUILD_CONFIGURATION == 'Tsan' ]]; then
+  PSM_EXTRA_FLAGS="PSM_DEBUG=1 PSM_SANITIZE=1"
+fi
+if [[ $MERCURY_BUILD_CONFIGURATION == 'Debug' ]]; then
+  PSM_EXTRA_FLAGS="PSM_DEBUG=1"
+fi
+PSM_VERSION=master
+
 set -e
 
 # Source intel env when using icc
@@ -65,5 +74,11 @@ if [[ ${RUNNER_OS} == 'Linux' ]]; then
   tar -xzf ucx-${UCX_VERSION}.tar.gz;
   cd ucx-${UCX_VERSION};
   ./configure --prefix=$PREFIX --enable-profiling --enable-frame-pointer --enable-stats --enable-memtrack --enable-fault-injection --enable-mt --disable-numa --without-java --without-go --disable-silent-rules ${UCX_EXTRA_FLAGS} CC="${CC}" CXX="${CXX}" CFLAGS="${UCX_CFLAGS}" && make -j2 -s && make install;
+
+  # PSM
+  git clone https://github.com/intel/psm.git psm-${PSM_VERSION};
+  cd psm-${PSM_VERSION};
+  patch -p1 < ${GITHUB_WORKSPACE}/Testing/script/psm_build.patch;
+  make install DESTDIR=$PREFIX ${PSM_EXTRA_FLAGS};
 fi
 
