@@ -99,6 +99,11 @@ if(NA_USE_SM)
   mark_as_advanced(NA_NA_TESTING_PROTOCOL)
 endif()
 
+if(NA_USE_PSM)
+  set(NA_PSM_TESTING_PROTOCOL "psm" CACHE STRING "Protocol(s) used for testing (e.g., psm).")
+  mark_as_advanced(NA_PSM_TESTING_PROTOCOL)
+endif()
+
 # List of plugins that support forward to self
 # set(NA_TESTING_SELF "sm;ofi")
 
