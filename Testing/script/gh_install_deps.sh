@@ -76,7 +76,7 @@ if [[ ${RUNNER_OS} == 'Linux' ]]; then
   ./configure --prefix=$PREFIX --enable-profiling --enable-frame-pointer --enable-stats --enable-memtrack --enable-fault-injection --enable-mt --disable-numa --without-java --without-go --disable-silent-rules ${UCX_EXTRA_FLAGS} CC="${CC}" CXX="${CXX}" CFLAGS="${UCX_CFLAGS}" && make -j2 -s && make install;
 
   # PSM
-  git clone https://github.com/intel/psm.git psm-${PSM_VERSION};
+  cd $HOME && git clone https://github.com/intel/psm.git psm-${PSM_VERSION};
   cd psm-${PSM_VERSION};
   patch -p1 < ${GITHUB_WORKSPACE}/Testing/script/psm_build.patch;
   make install DESTDIR=$PREFIX ${PSM_EXTRA_FLAGS};

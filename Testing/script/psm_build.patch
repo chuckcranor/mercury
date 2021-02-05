@@ -25,9 +25,20 @@ index d79c4bd..6bdc837 100644
  		filelist=/opt/intel/mic/psm/psm.filelist ; \
  		sed -e 's!%IPATHMAJOR%!$(IPATH_LIB_MAJOR)!g' \
 diff --git a/buildflags.mak b/buildflags.mak
-index 34fdf1c..6714d32 100644
+index 34fdf1c..4568d83 100644
 --- a/buildflags.mak
 +++ b/buildflags.mak
+@@ -60,8 +60,8 @@ ifdef SCIF_ROOT_DIR
+ 	SCIF_INCLUDE_FLAGS := -I$(SCIF_ROOT_DIR)/source-root/k1om-hybrid/include
+ endif
+ 
+-PSM_HAVE_SCIF ?= $(shell printf '\#include <scif.h>\nint main(void){return(0);}\n' | \
+-	$(CC) $(CFLAGS) $(LDFLAGS) -x c - -o /dev/null &> /dev/null && echo 1 || echo 0)
++#PSM_HAVE_SCIF ?= $(shell printf '\#include <scif.h>\nint main(void){return(0);}\n' | \
++#	$(CC) $(CFLAGS) $(LDFLAGS) -x c - -o /dev/null &> /dev/null && echo 1 || echo 0)
+ 
+ ifeq (1,$(PSM_HAVE_SCIF))
+ 	SCIF_INCLUDE_FLAGS += -DPSM_HAVE_SCIF=1
 @@ -72,7 +72,7 @@ WERROR := -Werror
  INCLUDES := -I. -I$(top_srcdir)/include -I$(top_srcdir)/mpspawn \
  	-I$(top_srcdir)/include/$(os)-$(arch) $(SCIF_INCLUDE_FLAGS)
