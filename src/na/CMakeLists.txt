@@ -257,6 +257,23 @@ if(NA_USE_PSM)
   )
 endif()
 
+# PSM2
+option(NA_USE_PSM2 "Use PSM2." OFF)
+if(NA_USE_PSM2)
+  find_package(PSM2 REQUIRED)
+  message(STATUS "PSM2 include directory: ${PSM2_INCLUDE_DIR}")
+  set(NA_PLUGINS ${NA_PLUGINS} psm2)
+  set(NA_HAS_PSM2 1)
+  set(NA_INT_INCLUDE_DEPENDENCIES
+    ${NA_INT_INCLUDE_DEPENDENCIES}
+    ${PSM2_INCLUDE_DIR}
+  )
+  set(NA_EXT_LIB_DEPENDENCIES
+    ${NA_EXT_LIB_DEPENDENCIES}
+    ${PSM2_LIBRARIES}
+  )
+endif()
+
 #------------------------------------------------------------------------------
 # Configure module header files
 #------------------------------------------------------------------------------
@@ -334,6 +351,13 @@ if(NA_HAS_PSM)
   set(NA_SRCS
     ${NA_SRCS}
     ${CMAKE_CURRENT_SOURCE_DIR}/na_psm.c
+  )
+endif()
+
+if(NA_HAS_PSM2)
+  set(NA_SRCS
+    ${NA_SRCS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/na_psm2.c
   )
 endif()
 

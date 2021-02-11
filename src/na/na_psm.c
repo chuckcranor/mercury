@@ -46,8 +46,35 @@
 #include "mercury_list.h"
 #include "mercury_time.h"
 
+/*
+ * this plugin uses the PSM API, but supports PSM2 (intel omnipath)
+ * as well using the wrappers in na_psm2.h (PSM2 can emulate PSM).
+ */
+#ifdef PSM2
+
+#include <psm2.h>
+#include <psm2_mq.h>
+
+#include "na_psm2.h"      /* wrappers */
+
+#define NA_PSM_NAME "psm2"
+#define NA_PSM_PLUGIN_VARIABLE NA_PLUGIN_OPS(psm2)
+
+#else
+
 #include <psm.h>
 #include <psm_mq.h>
+
+/* locally defined struct aliases */
+typedef struct psm_optkey psm_optkey_t;
+typedef struct psm_ep_open_opts psm_ep_open_opts_t;
+
+#define NA_PSM_NAME "psm"
+#define NA_PSM_PLUGIN_VARIABLE NA_PLUGIN_OPS(psm)
+
+#endif /* PSM2 */
+
+
 
 /******************************************************************************
  * compile time defs and configuration
@@ -1208,7 +1235,7 @@ na_psm_progress_ucmsg(struct na_psm_class *pc, psm_mq_status_t *psmstat,
             status = NA_PSM_TAG_ST_EINVAL;
             goto send_error_now;
         } else {
-            NA_LOG_DEBUG("get-target:epid=%" PRIx64 " tag=%" PRIx64 
+            NA_LOG_DEBUG("get-target:epid=%" PRIx64 " tag=%" PRIx64
                          " p=%p len=%d handled",
                          naddr->epid, rma_tag, userdata, (int) length);
         }
@@ -1251,7 +1278,7 @@ na_psm_progress_ucmsg(struct na_psm_class *pc, psm_mq_status_t *psmstat,
         goto send_error_now;
     }
 
-    NA_LOG_DEBUG("put-target:epid=%" PRIx64 " tag=%" PRIx64 
+    NA_LOG_DEBUG("put-target:epid=%" PRIx64 " tag=%" PRIx64
                  " h=%p p=%p len=%d op_id=%p start",
                 naddr->epid, rma_tag, pop->datasub.psm_handle,
                 userdata, (int) length, pop);
@@ -1322,7 +1349,7 @@ na_psm_progress_ucmsg(struct na_psm_class *pc, psm_mq_status_t *psmstat,
 static na_bool_t
 na_psm_check_protocol(const char NA_UNUSED *protocol_name)
 {
-    if (protocol_name && strcmp(protocol_name, "psm") == 0)
+    if (protocol_name && strcmp(protocol_name, NA_PSM_NAME) == 0)
         return NA_TRUE;
     return NA_FALSE;
 }
@@ -1337,7 +1364,7 @@ na_psm_initialize(na_class_t *na_class,
 {
     na_bool_t bret;
     struct na_psm_class *pc;
-    struct psm_ep_open_opts o_opts;
+    psm_ep_open_opts_t o_opts;
     psm_error_t perr, perr2;
     int lcv;
 
@@ -1702,7 +1729,7 @@ na_psm_addr_to_string(na_class_t NA_UNUSED *na_class, char *buf,
     char tmpbuf[32];
     na_size_t len;
 
-    snprintf(tmpbuf, sizeof(tmpbuf), "psm://%" PRIx64, naddr->epid);
+    snprintf(tmpbuf, sizeof(tmpbuf), NA_PSM_NAME "://%" PRIx64, naddr->epid);
     len = strlen(tmpbuf);
     if (buf) {
         if (len >= *buf_size) {
@@ -2614,8 +2641,8 @@ unlock_finish:
  *  - poll_get_fd: psm does not expose a filedescriptor to poll on
  *  - poll_try_wait: always ok to push psm progress
  */
-const struct na_class_ops NA_PLUGIN_OPS(psm) = {
-    "psm",                                 /* name */
+const struct na_class_ops NA_PSM_PLUGIN_VARIABLE = {
+    NA_PSM_NAME,                           /* name */
     na_psm_check_protocol,                 /* check_protocol */
     na_psm_initialize,                     /* initialize */
     na_psm_finalize,                       /* finalize */

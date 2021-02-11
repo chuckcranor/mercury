@@ -115,4 +115,7 @@ typedef na_uint64_t na_ptr_t;
 /* PSM */
 #cmakedefine NA_HAS_PSM
 
+/* PSM2 */
+#cmakedefine NA_HAS_PSM2
+
 #endif /* NA_CONFIG_H */

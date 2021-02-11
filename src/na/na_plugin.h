@@ -170,6 +170,9 @@ extern NA_PRIVATE const struct na_class_ops NA_PLUGIN_OPS(ucx);
 #ifdef NA_HAS_PSM
 extern NA_PRIVATE const struct na_class_ops NA_PLUGIN_OPS(psm);
 #endif
+#ifdef NA_HAS_PSM2
+extern NA_PRIVATE const struct na_class_ops NA_PLUGIN_OPS(psm2);
+#endif
 
 #ifdef __cplusplus
 }
