@@ -1109,7 +1109,7 @@ na_psm_progress_op(struct na_psm_op_id *pop, struct na_psm_subop *subop,
                 psm_dec64(&pop->ucsargs[NA_PSM_UCARG_LENGTH], wanted);
                 if (wanted != subop->psm_status.nbytes) {
                     NA_LOG_WARNING("get mismatch "
-                     "want=%" PRId64 ", got=%" PRId64 "!",
+                     "want=%" PRId64 ", got=%" PRId32 "!",
                      wanted, subop->psm_status.nbytes);
                 }
             }
@@ -1162,7 +1162,7 @@ na_psm_progress_ucmsg(struct na_psm_class *pc, psm_mq_status_t *psmstat,
         goto finish;
     }
     if (psmstat->nbytes < sizeof(*ucmsg)) { /* initiator goofed? */
-        NA_LOG_ERROR("short rcv (%d < %d)", psmstat->nbytes, sizeof(*ucmsg));
+        NA_LOG_ERROR("short rcv (%d < %zu)", psmstat->nbytes, sizeof(*ucmsg));
         goto finish;
     }
     op = psmstat->msg_tag & NA_PSM_TAG_ECRMASK;
@@ -1765,7 +1765,7 @@ na_psm_addr_serialize(na_class_t NA_UNUSED *na_class, void *buf,
     struct na_psm_addr *naddr = (struct na_psm_addr *) addr;
 
     if (buf_size < NA_PSM_ADDR_SERSIZE) {
-        NA_LOG_ERROR("bufsiz err %d", buf_size);
+        NA_LOG_ERROR("bufsiz err %" PRId64, buf_size);
         return(NA_OVERFLOW);
     }
 
@@ -1785,7 +1785,7 @@ na_psm_addr_deserialize(na_class_t *na_class, na_addr_t *addr,
     na_return_t ret;
 
     if (buf_size < NA_PSM_ADDR_SERSIZE) {
-        NA_LOG_ERROR("bufsiz err %d", buf_size);
+        NA_LOG_ERROR("bufsiz err %" PRId64, buf_size);
         return(NA_OVERFLOW);
     }
     psm_dec64(buf, i64epid);
@@ -1861,7 +1861,7 @@ na_psm_msg_init_unexpected(na_class_t *na_class, void *buf, na_size_t buf_size)
     pc = na_class->plugin_class;
 
     if (buf_size < sizeof(pc->self.epid)) {
-        NA_LOG_ERROR("buf_size too small %d", buf_size);
+        NA_LOG_ERROR("buf_size too small %" PRId64, buf_size);
         return NA_OVERFLOW;
     }
 
@@ -2058,7 +2058,7 @@ na_psm_mem_handle_serialize(na_class_t NA_UNUSED *na_class, void *buf,
     mh = (struct na_psm_mem_handle *) mem_handle;
 
     if (buf_size < sizeof(mh->token)) {
-        NA_LOG_ERROR("bad size %d", buf_size);
+        NA_LOG_ERROR("bad size %" PRId64, buf_size);
         return NA_MSGSIZE;
     }
 
@@ -2079,7 +2079,7 @@ na_psm_mem_handle_deserialize(na_class_t NA_UNUSED *na_class,
     struct na_psm_mem_handle *mh;
 
     if (buf_size < sizeof(mh->token)) {
-        NA_LOG_ERROR("bad size %d", buf_size);
+        NA_LOG_ERROR("bad size %" PRId64, buf_size);
         return NA_MSGSIZE;
     }
 
