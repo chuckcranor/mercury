@@ -222,9 +222,24 @@ build_mercury_test(bulk)
 build_mercury_test(lookup)
 build_mercury_test(proc)
 
+# XXXCDC
+build_mercury_test(hg_rpcgen)
+# XXX: target_sources needs cmake 3.1?
+target_sources(hg_test_hg_rpcgen PRIVATE test_hg_rpcgen_proc.c)
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/test_hg_rpcgen.h
+         ${CMAKE_CURRENT_BINARY_DIR}/test_hg_rpcgen_proc.c
+  COMMAND ${CMAKE_BINARY_DIR}/bin/hg_rpcgen
+                ${CMAKE_CURRENT_SOURCE_DIR}/test_hg_rpcgen.x
+  DEPENDS test_hg_rpcgen.x)
+target_include_directories(hg_test_hg_rpcgen PRIVATE
+  ${CMAKE_CURRENT_BINARY_DIR})
+# XXXCDC
+
 build_mercury_test(kill)
 
 add_mercury_test_standalone(proc)
+add_mercury_test_standalone(hg_rpcgen)
 
 add_mercury_test_comm_all(rpc)
 add_mercury_test_comm_all(bulk)
